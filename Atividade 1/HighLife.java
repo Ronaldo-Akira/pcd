@@ -1,10 +1,9 @@
-public class GameOfLife extends Thread {
-
+public class HighLife extends Thread {
     int beginIndex, endIndex, gridSize;
     public int[][] grid;
     public int[][] newGrid;
 
-    public GameOfLife(int[][] grid, int[][] newGrid, int beginIndex, int endIndex) {
+    public HighLife(int[][] grid, int[][] newGrid, int beginIndex, int endIndex) {
         this.beginIndex = beginIndex;
         this.endIndex = endIndex;
         this.grid = grid;
@@ -18,7 +17,7 @@ public class GameOfLife extends Thread {
                 int livingNeighbors = Utility.getLivingNeighbors(grid, i, j);
                 if (grid[i][j] == 1 && (livingNeighbors == 2 || livingNeighbors == 3)) {
                     newGrid[i][j] = 1;
-                } else if (grid[i][j] == 0 && livingNeighbors == 3) {
+                } else if (grid[i][j] == 0 && (livingNeighbors == 3 || livingNeighbors == 6)) {
                     newGrid[i][j] = 1;
                 } else {
                     newGrid[i][j] = 0;
@@ -29,6 +28,7 @@ public class GameOfLife extends Thread {
 
     @Override
     public void run() {
-        nextGeneration(grid, newGrid, beginIndex, endIndex);
+        nextGeneration(grid, newGrid, beginIndex, endIndex );
     }
+
 }
