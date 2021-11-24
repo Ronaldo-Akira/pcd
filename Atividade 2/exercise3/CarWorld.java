@@ -48,18 +48,16 @@ public class CarWorld extends JPanel {
     }
 
     public void addCar(final int cartype) {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                Car car;
-                if (cartype == Car.REDCAR) {
-                    car = new Car(cartype, redCars.get(redCars.size() - 1), redCar, controller);
-                    redCars.add(car);
-                } else {
-                    car = new Car(cartype, blueCars.get(blueCars.size() - 1), blueCar, controller);
-                    blueCars.add(car);
-                }
-                new Thread(car).start();
+        SwingUtilities.invokeLater(() -> {
+            Car car;
+            if (cartype == Car.REDCAR) {
+                car = new Car(cartype, redCars.get(redCars.size() - 1), redCar, controller);
+                redCars.add(car);
+            } else {
+                car = new Car(cartype, blueCars.get(blueCars.size() - 1), blueCar, controller);
+                blueCars.add(car);
             }
+            new Thread(car).start();
         });
     }
 

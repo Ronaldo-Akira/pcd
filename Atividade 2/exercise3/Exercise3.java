@@ -17,12 +17,10 @@ public class Exercise3 {
         win.pack();
         win.setVisible(true);
 
-        new Thread(new Runnable() {
-            public void run() {
-                while (true) {
-                    nap(25);
-                    win.repaint();
-                }
+        new Thread(() -> {
+            while (true) {
+                nap(25);
+                win.repaint();
             }
         }).start();
 
