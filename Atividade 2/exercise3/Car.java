@@ -83,5 +83,4 @@ public class Car implements Runnable {
     public void draw(Graphics g) {
         g.drawImage(image, xPos, yPos, null);
     }
-
 }

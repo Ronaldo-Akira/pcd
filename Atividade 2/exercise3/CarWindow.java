@@ -2,8 +2,6 @@ package exercise3;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class CarWindow extends JFrame {
 
@@ -23,19 +21,9 @@ public class CarWindow extends JFrame {
         addLeft = new JButton("Add Left");
         addRight = new JButton("Add Right");
 
-        addLeft.addActionListener(new ActionListener() {
-                                      public void actionPerformed(ActionEvent e) {
-                                          display.addCar(Car.REDCAR);
-                                      }
-                                  }
-        );
+        addLeft.addActionListener(e -> display.addCar(Car.REDCAR));
 
-        addRight.addActionListener(new ActionListener() {
-                                       public void actionPerformed(ActionEvent e) {
-                                           display.addCar(Car.BLUECAR);
-                                       }
-                                   }
-        );
+        addRight.addActionListener(e -> display.addCar(Car.BLUECAR));
 
 
         JPanel p1 = new JPanel();

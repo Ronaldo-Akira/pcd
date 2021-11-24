@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
-class CarWorld extends JPanel {
+public class CarWorld extends JPanel {
 
     Image bridge;
     Image redCar;
@@ -12,19 +12,19 @@ class CarWorld extends JPanel {
 
     TrafficsController controller;
 
-    ArrayList<Car> blueCars = new ArrayList<>();
-    ArrayList<Car> redCars = new ArrayList<>();
+    ArrayList<Car> blueCars = new ArrayList<Car>();
+    ArrayList<Car> redCars = new ArrayList<Car>();
 
     public CarWorld() {
         controller = new TrafficsController();
         MediaTracker mt = new MediaTracker(this);
         Toolkit toolkit = Toolkit.getDefaultToolkit();
 
-        redCar = toolkit.getImage("exercise3/image/redcar.gif");
+        redCar = toolkit.getImage("Atividade 2/exercise3/image/redCar.gif");
         mt.addImage(redCar, 0);
-        blueCar = toolkit.getImage("exercise3/image/bluecar.gif");
+        blueCar = toolkit.getImage("Atividade 2/exercise3/image/blueCar.gif");
         mt.addImage(blueCar, 1);
-        bridge = toolkit.getImage("exercise3/image/bridge1.gif");
+        bridge = toolkit.getImage("Atividade 2/exercise3/image/bridge1.gif");
         mt.addImage(bridge, 2);
 
         try {
