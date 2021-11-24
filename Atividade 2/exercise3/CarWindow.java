@@ -11,13 +11,13 @@ public class CarWindow extends JFrame {
 
     public CarWindow() {
 
-        Container c = getContentPane();
+        Container container = getContentPane();
 
-        c.setLayout(new BorderLayout());
+        container.setLayout(new BorderLayout());
         display = new CarWorld();
 
 
-        c.add("Center", display);
+        container.add("Center", display);
         addLeft = new JButton("Add Left");
         addRight = new JButton("Add Right");
 
@@ -30,7 +30,7 @@ public class CarWindow extends JFrame {
         p1.setLayout(new FlowLayout());
         p1.add(addLeft);
         p1.add(addRight);
-        c.add("South", p1);
+        container.add("South", p1);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
 

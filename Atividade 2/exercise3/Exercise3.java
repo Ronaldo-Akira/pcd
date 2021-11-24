@@ -1,6 +1,6 @@
 package exercise3;
 
-public class Exercise3{
+public class Exercise3 {
 
     private static void nap(int ms) {
         try {
@@ -26,8 +26,5 @@ public class Exercise3{
             }
         }).start();
 
-
-
     }
-
 }
