@@ -1,1 +1,0 @@
-//TODO: Atividade 2 - Somatorias, secao critida e reducoes em OpenMP
