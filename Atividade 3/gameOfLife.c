@@ -4,7 +4,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#define GENERATIONS 10
+#define GENERATIONS 1
 
 void initializeMatrix(int *matrix, int N);
 
@@ -18,8 +18,6 @@ void drawRPentomino(int *matrix, int N);
 
 int getNeighbors(int *matrix, int i, int j, int N);
 
-void simulateLifeGame(int *grid, int *newGrid, int N, int gridStart, int gridEnd);
-
 void copyMatrix(int *grid, int *newGrid, int startGrid, int endGrid, int N);
 
 int getTotalAlive(int *grid, int gen);
@@ -27,17 +25,15 @@ int getTotalAlive(int *grid, int gen);
 int getPrevious(int pos, int N);
 
 int getNext(int pos, int N);
-//long long runTrial(int numProcesses, int N);
-
 
 int main(int argc, char *argv[]) {
 
     int N = 2048;
+    int *newGrid, *grid, numProcesses, processId, gridStart, gridEnd, gridSize;
+
     MPI_Init(&argc, &argv);
 
 //    double startTime = MPI_Wtime();
-
-    int *newGrid, *grid, numProcesses, processId, gridStart, gridEnd, gridSize;
 
     newGrid = malloc(sizeof(int) * N * N);
     grid = malloc(sizeof(int) * N * N);
@@ -45,6 +41,9 @@ int main(int argc, char *argv[]) {
     initializeMatrix(grid, N);
     drawGlider(grid, N);
     drawRPentomino(grid, N);
+
+    int totalAlive = getTotalAlive(grid, N);
+    printf("totalALive:%d \n", totalAlive);
 
     for (int gen = 1; gen <= GENERATIONS; gen++) {
 
@@ -81,15 +80,17 @@ int main(int argc, char *argv[]) {
                 copyMatrix(grid, newGrid, gridStart, gridEnd, N);
             }
         }
-        MPI_Barrier(MPI_COMM_WORLD);
 
-//        MPI_Bcast(newGrid, (N * N), MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(newGrid, (N * N), MPI_INT, 0, MPI_COMM_WORLD);
         copyMatrix(grid, newGrid, 0, N, N);
-        MPI_Barrier(MPI_COMM_WORLD);
+
 
     }
+
+    totalAlive = getTotalAlive(grid, N);
     if (processId == 0) {
-        printf("Total alive cells after %d generations: %d\n", GENERATIONS, getTotalAlive(grid, N));
+
+        printf("Total alive cells after %d generations: %d\n", GENERATIONS, totalAlive);
     }
     MPI_Finalize();
 }
@@ -107,21 +108,6 @@ int getNeighbors(int *matrix, int i, int j, int N) {
            matrix[findIndex(nextLine, nextColumn, N)];
 }
 
-void simulateLifeGame(int *grid, int *newGrid, int N, int gridStart, int gridEnd) {
-    for (int i = gridStart; i < gridEnd; i++) {
-        for (int j = 0; j < N; j++) {
-            int neighbors = getNeighbors(grid, i, j, N);
-            if ((neighbors == 2 || neighbors == 3) && grid[findIndex(i, j, N)] == 1) {
-                newGrid[findIndex(i, j, N)] = 1;
-            } else if (neighbors == 3 && grid[findIndex(i, j, N)] == 0) {
-                newGrid[findIndex(i, j, N)] = 1;
-            } else {
-                newGrid[findIndex(i, j, N)] = 0;
-            }
-        }
-    }
-    return;
-}
 
 int findIndex(int i, int j, int N) {
     return i * N + j;
@@ -133,11 +119,10 @@ void copyMatrix(int *grid, int *newGrid, int startGrid, int endGrid, int N) {
             grid[findIndex(i, j, N)] = newGrid[findIndex(i, j, N)];
         }
     }
-    return;
 }
 
 int getTotalAlive(int *grid, int N) {
-    int partialTotalAlive = 0, totalAlive = 0, numProcesses, processId;
+    int partialAlive = 0, totalAlive = 0, numProcesses, processId;
 
     MPI_Comm_size(MPI_COMM_WORLD, &numProcesses);
     MPI_Comm_rank(MPI_COMM_WORLD, &processId);
@@ -145,11 +130,10 @@ int getTotalAlive(int *grid, int N) {
     for (int i = processId; i < N; i += numProcesses) {
         for (int j = 0; j < N; j++) {
             if (grid[findIndex(i, j, N)] == 1)
-                partialTotalAlive++;
+                partialAlive++;
         }
     }
-    printf("%d", partialTotalAlive);
-//    MPI_Reduce(&partialTotalAlive, &totalAlive, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&partialAlive, &totalAlive, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
     return totalAlive;
 }
 
@@ -176,7 +160,6 @@ void printMatrix(int *matrix, int N) {
         printf("\n");
     }
     printf("\n");
-    return;
 }
 
 void initializeMatrix(int *matrix, int N) {
@@ -185,7 +168,6 @@ void initializeMatrix(int *matrix, int N) {
             matrix[findIndex(i, j, N)] = 0;
         }
     }
-    return;
 }
 
 void drawGlider(int *matrix, int N) {
@@ -197,7 +179,6 @@ void drawGlider(int *matrix, int N) {
         matrix[findIndex(lin + 2, col + 1, N)] = 1;
         matrix[findIndex(lin + 2, col + 2, N)] = 1;
     }
-    return;
 }
 
 void drawRPentomino(int *matrix, int N) {
@@ -209,5 +190,4 @@ void drawRPentomino(int *matrix, int N) {
         matrix[findIndex(lin + 1, col + 1, N)] = 1;
         matrix[findIndex(lin + 2, col + 1, N)] = 1;
     }
-    return;
 }
