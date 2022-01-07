@@ -4,7 +4,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#define GENERATIONS 1
+#define GENERATIONS 2000
 
 void initializeMatrix(int *matrix, int N);
 
@@ -33,15 +33,13 @@ int main(int argc, char *argv[]) {
 
     MPI_Init(&argc, &argv);
 
-//    double startTime = MPI_Wtime();
-
     newGrid = malloc(sizeof(int) * N * N);
     grid = malloc(sizeof(int) * N * N);
 
     initializeMatrix(grid, N);
     drawGlider(grid, N);
     drawRPentomino(grid, N);
-
+    //MPI_Barrier(MPI_COMM_WORLD);
     int totalAlive = getTotalAlive(grid, N);
     printf("totalALive:%d \n", totalAlive);
 
@@ -49,6 +47,7 @@ int main(int argc, char *argv[]) {
 
         MPI_Comm_size(MPI_COMM_WORLD, &numProcesses);
         MPI_Comm_rank(MPI_COMM_WORLD, &processId);
+
         gridSize = N / numProcesses;
         gridStart = (processId) * gridSize;
         gridEnd = (processId + 1) * gridSize;
@@ -80,7 +79,7 @@ int main(int argc, char *argv[]) {
                 copyMatrix(grid, newGrid, gridStart, gridEnd, N);
             }
         }
-
+        //MPI_Barrier(MPI_COMM_WORLD);
         MPI_Bcast(newGrid, (N * N), MPI_INT, 0, MPI_COMM_WORLD);
         copyMatrix(grid, newGrid, 0, N, N);
 
@@ -133,6 +132,7 @@ int getTotalAlive(int *grid, int N) {
                 partialAlive++;
         }
     }
+    //MPI_Barrier(MPI_COMM_WORLD);
     MPI_Reduce(&partialAlive, &totalAlive, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
     return totalAlive;
 }
