@@ -8,49 +8,42 @@
 
 void initializeMatrix(int *matrix, int N);
 void printMatrix(int *matrix, int N);
-int findIndex(int i, int j, int N);
+int findIndex(int i, int j);
 void drawGlider(int *matrix, int N);
 void drawRPentomino(int *matrix, int N);
 int getNeighbors(int *matrix, int i, int j, int N);
 void simulateLifeGame(int *grid, int *newGrid, int N, int gridStart, int gridEnd);
-void copyMatrix(int *grid, int *newGrid, int startGrid, int endGrid, int N);
-int getTotalAlive(int *grid, int N);
+void copyMatrix(int *grid, int *newGrid, int startGrid, int endGrid);
+int getTotalAlive(int *grid, int gen);
 int getPrevious(int pos, int N);
 int getNext(int pos, int N);
-//long long runTrial(int numThreads, int N);
+//long long runTrial(int numProcesses, int N);
 
 
 int main(int argc, char* argv[]) {
 
-    MPI_INIT(&argc, &argv);
+    MPI_Init(&argc, &argv);
 
     double startTime = MPI_Wtime();
 
-    int *newGrid, *grid, numThreads, threadId, gridStart, gridEnd, gridSize;
+    int *newGrid, *grid, numProcesses, processId, gridStart, gridEnd, gridSize;
 
     newGrid = malloc(sizeof(int) * N * N);
     grid = malloc(sizeof(int) * N * N);
 
-    MPI_Comm_size(MPI_COMM_WORLD, &numThreads);
-
-    gridSize = N/numThreads;
-
-    MPI_Comm_rank(MPI_COMM_WORLD, &threadId);
-
-    gridStart = (threadId)*gridSize;
-    gridEnd = (threadId+1)*gridSize;
-
-    MPI_Barrier(MPI_COMM_WORLD);
-
     initializeMatrix(grid, N);
     drawGlider(grid, N);
     drawRPentomino(grid, N);
-    copyMatrix(newGrid, grid, 0, N, N);
-
-    MPI_Barrier(MPI_COMM_WORLD);
 
 
     for (int gen=1; gen <= GENERATIONS; gen++) {
+        
+        MPI_Comm_size(MPI_COMM_WORLD, &numProcesses);
+        MPI_Comm_rank(MPI_COMM_WORLD, &processId);
+        gridSize = N/numProcesses;
+        gridStart = (processId)*gridSize;
+        gridEnd = (processId+1)*gridSize;
+
         for (int i=gridStart; i < gridEnd; i++) {
             for (int j=0; j < N; j++) {
                 int neighbors = getNeighbors(grid, i, j, N);
@@ -63,34 +56,30 @@ int main(int argc, char* argv[]) {
                 }
             }
         }
-        MPI_Barrier(MPI_COMM_WORLD);
-        copyMatrix(gird, newGrid, gridStart, gridEnd, N);
-        /* simulateLifeGame(grid, newGrid, N, gridStart, gridEnd);
-        #pragma omp barrier
-        copyMatrix(grid, newGrid, gridStart, gridEnd, N);
-        #pragma omp barrier */
+
+        if (processId != 0) {
+            MPI_Send(newGrid, (N*N), MPI_INT, 0, 1, MPI_COMM_WORLD);
+        } else {
+            for (int i=gridStart; i < gridEnd; i++) {
+                for (int j=0; j < N; j++) {
+                    grid[findIndex(i, j)] = newGrid[findIndex(i, j)];
+                }
+            }
+
+            for (int process = 1; process < numProcesses; process++) {
+                MPI_Recv(newGrid, (N*N), MPI_INT, process, 1, MPI_COMM_WORLD, NULL);
+                copyMatrix(grid, newGrid, gridStart, gridEnd);
+            }
+        }
+        MPI_Bcast(newGrid, (N*N), MPI_INT, 0, MPI_COMM_WORLD);
+        copyMatrix(grid, newGrid, 0, N);
     }
-    int sum = 0, totalSum = 0;
-    for (int i = gridStart; i <= gridEnd; i++) 
-        for (int j = 1; j <= N; j++)
-            sum += grid[findIndex(i, j, N)];
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Reduce(&sum, &totalSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-
-    if (threadId == 0)
-        printf("%d cells are alive after %d generations\n", totalSum, GENERATIONS); 
-
-    free(grid);
-    free(newGrid);
-    double endTime = MPI_Wtime();
-    MPI_Finalize();
-    printf("Time passed: %f\n", endTime - startTime);
-    return 0;
-    //printf("Last generation after %d iterations using %d threads: %d cells are alive.\n", GENERATIONS, numThreads, getTotalAlive(grid, N));
-
+    if (processId == 0) {
+        printf("Total alive cells after %d generations: %d\n", GENERATIONS, getTotalAlive(grid));
+    }
 }
 
-/* long long runTrial(int numThreads, int N) {
+/* long long runTrial(int numProcesses, int N) {
     
 } */
 
@@ -120,11 +109,11 @@ void simulateLifeGame(int *grid, int *newGrid, int N, int gridStart, int gridEnd
     return;
 }
 
-int findIndex(int i, int j, int N) {
+int findIndex(int i, int j) {
     return i * N + j;
 }
 
-void copyMatrix(int *grid, int *newGrid, int startGrid, int endGrid, int N) {
+void copyMatrix(int *grid, int *newGrid, int startGrid, int endGrid) {
     for (int i=startGrid; i < endGrid; i++) {
         for (int j=0; j < N; j++) {
             grid[findIndex(i, j, N)] = newGrid[findIndex(i, j, N)];
@@ -133,11 +122,20 @@ void copyMatrix(int *grid, int *newGrid, int startGrid, int endGrid, int N) {
     return;
 } 
 
-int getTotalAlive(int *grid, int N) {
-    int totalAlive = 0;
-    for (int i=0; i<N*N; i++) {
-        if (grid[i] == 1) totalAlive++;
+int getTotalAlive(int *grid) {
+    int partialTotalAlive = 0, totalAlive = 0, numProcesses, processId;
+
+    MPI_Comm_size(MPI_COMM_WORLD, &numProcesses);
+    MPI_Comm_rank(MPI_COMM_WORLD, &processId);
+
+    for (int i = processId; i < N; i += numProcesses) {
+        for (int j = 0; j < N; j++) {
+            if (grid[findIndex(i, j, N)] == 1)
+                partialTotalAlive++;
+        }
     }
+
+    MPI_Reduce(&partialTotalAlive, &totalAlive, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
     return totalAlive;
 }
 
