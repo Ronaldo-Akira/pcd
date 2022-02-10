@@ -2,15 +2,8 @@ from multiprocessing import Process, Semaphore
 
 import time
 from queue import Queue
-
+from BubbleSort import bubble_sort
 import pandas as pd
-
-def bubble_sort(array):
-    for final in range(len(array), 0, -1):
-        for current in range(0, final - 1):
-            if array[current] > array[current + 1]:
-                array[current], array[current + 1] = array[current + 1], array[current]
-
 
 def sort_dataframe(file_name, semaphore):
     df = pd.read_csv(f"randomized dataframes/{file_name}.csv")
@@ -19,10 +12,10 @@ def sort_dataframe(file_name, semaphore):
     semaphore.release()
 
 
-if __name__ == '__main__':
+def main():
     initial_time = time.time()
     randomized_queue = Queue()
-    concurrency = 8
+    concurrency = 1
     semaphore = Semaphore(concurrency)
 
     for i in range(10):
@@ -40,3 +33,7 @@ if __name__ == '__main__':
 
     final_time = time.time()
     print(f"time elapsed: {final_time - initial_time}")
+
+
+if __name__ == '__main__':
+    main()
