@@ -2,8 +2,9 @@ from multiprocessing import Process, Semaphore
 
 import time
 from queue import Queue
-from BubbleSort import bubble_sort
+from bubblesort import bubble_sort
 import pandas as pd
+
 
 def sort_dataframe(file_name, semaphore):
     df = pd.read_csv(f"randomized dataframes/{file_name}.csv")
@@ -12,10 +13,9 @@ def sort_dataframe(file_name, semaphore):
     semaphore.release()
 
 
-def main():
+def batch_sorting_multiple_process(number_of_files, concurrency):
     initial_time = time.time()
     randomized_queue = Queue()
-    concurrency = 1
     semaphore = Semaphore(concurrency)
 
     for i in range(10):
@@ -33,7 +33,8 @@ def main():
 
     final_time = time.time()
     print(f"time elapsed: {final_time - initial_time}")
+    return final_time - initial_time
 
 
 if __name__ == '__main__':
-    main()
+    batch_sorting_multiple_process(8)
